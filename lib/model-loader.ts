@@ -42,7 +42,7 @@ export async function classifyImage(imageElement: HTMLImageElement): Promise<{
 
   // Return prediction (threshold at 0.5)
   return {
-    prediction: value > 0.5 ? "Parasitized" : "Uninfected",
+    prediction: value > 0.5 ? "Uninfected" : "Parasitized",
     confidence: value > 0.5 ? value : 1 - value,
   };
 }
