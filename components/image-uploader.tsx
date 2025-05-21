@@ -31,6 +31,7 @@ export function ImageUploader() {
         setModelLoaded(true);
         setError(null);
       } catch (err) {
+        console.error("Model loading error:", err);
         setError(
           "Failed to load the malaria detection model. Please try refreshing the page."
         );
@@ -146,7 +147,7 @@ export function ImageUploader() {
                     alt="Blood smear sample"
                     fill
                     className="object-contain rounded-lg"
-                    ref={imageRef as any}
+                    ref={imageRef as React.RefObject<HTMLImageElement>}
                     sizes="(max-width: 768px) 100vw, 400px"
                   />
                 </div>
