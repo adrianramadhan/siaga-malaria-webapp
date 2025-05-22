@@ -42,7 +42,7 @@ export function DeveloperTeam() {
   ];
 
   return (
-    <div className="bg-white border rounded-lg p-6 mb-6 mx-12" id="team">
+    <div className="bg-white border rounded-lg p-6 mb-6 lg:mx-12" id="team">
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-4">
           <Users className="h-5 w-5 text-green-600" />
