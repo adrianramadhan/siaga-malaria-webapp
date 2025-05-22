@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { loadModel, classifyImage } from "@/lib/model-loader";
 import Image from "next/image";
+import { MedicalReport } from "@/components/medical-report";
 
 export function ImageUploader() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -30,8 +31,7 @@ export function ImageUploader() {
         await loadModel();
         setModelLoaded(true);
         setError(null);
-      } catch (err) {
-        console.error("Model loading error:", err);
+      } catch {
         setError(
           "Failed to load the malaria detection model. Please try refreshing the page."
         );
@@ -147,7 +147,7 @@ export function ImageUploader() {
                     alt="Blood smear sample"
                     fill
                     className="object-contain rounded-lg"
-                    ref={imageRef as React.RefObject<HTMLImageElement>}
+                    ref={imageRef}
                     sizes="(max-width: 768px) 100vw, 400px"
                   />
                 </div>
@@ -213,6 +213,12 @@ export function ImageUploader() {
             </div>
           </CardContent>
         </Card>
+      )}
+      {prediction && (
+        <MedicalReport
+          prediction={prediction.prediction}
+          confidence={prediction.confidence}
+        />
       )}
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
