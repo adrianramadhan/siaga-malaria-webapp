@@ -1,6 +1,7 @@
 import { Header } from "@/components/header";
 import { ImageUploader } from "@/components/image-uploader";
 import { Footer } from "@/components/footer";
+import { DeveloperTeam } from "@/components/developer-team";
 
 export default function Home() {
   return (
@@ -8,6 +9,7 @@ export default function Home() {
       <Header />
       <div className="flex-1 container mx-auto px-4 py-8">
         <ImageUploader />
+        <DeveloperTeam />
       </div>
       <Footer />
     </main>

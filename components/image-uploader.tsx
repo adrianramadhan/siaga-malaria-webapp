@@ -98,7 +98,7 @@ export function ImageUploader() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto mb-12">
       <div className="mb-8 text-center">
         <h2 className="text-2xl font-bold text-gray-800 mb-2">
           Malaria Detection Tool
