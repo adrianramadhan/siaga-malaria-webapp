@@ -11,16 +11,16 @@ export function Header() {
 
   const navLinks = [
     { href: "/", label: "Home" },
-    { href: "#about", label: "About" },
-    { href: "#team", label: "Team" },
-    { href: "#contact", label: "Contact" },
+    { href: "/#about", label: "About" },
+    { href: "/#team", label: "Team" },
+    { href: "/contact", label: "Contact" },
   ];
 
   return (
     <header className="bg-green-700 text-white shadow-md sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2">
             <MicroscopeIcon className="h-8 w-8" />
             <div>
               <h1 className="text-xl font-bold">Siaga Malaria Nusantara</h1>
@@ -28,14 +28,17 @@ export function Header() {
                 AI-powered malaria detection system
               </p>
             </div>
-          </div>
+          </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:block">
             <ul className="flex space-x-6">
               {navLinks.map((link) => (
                 <li key={link.label}>
-                  <Link href={link.href} className="hover:underline">
+                  <Link
+                    href={link.href}
+                    className="hover:underline transition-colors"
+                  >
                     {link.label}
                   </Link>
                 </li>
