@@ -13,31 +13,33 @@ export function DeveloperTeam() {
   // Team members data - replace with your actual team information
   const teamMembers: TeamMember[] = [
     {
-      name: "Team Member 1",
+      name: "Naila Suqya",
       role: "Project Lead",
       description:
-        "Responsible for project management and machine learning model development.",
-      imageUrl: "/placeholder.svg?height=200&width=200", // Replace with actual image
+        "Responsible for project management, and creating web mockups using Figma.",
+      imageUrl:
+        "https://www.freepik.com/free-vector/hand-drawn-avatar-set-illustration_11223345.htm",
     },
     {
-      name: "Team Member 2",
+      name: "Brian Aji Pamungkas",
       role: "Machine Learning Engineer",
       description:
-        "Developed the user interface and user experience of the application.",
-      imageUrl: "/placeholder.svg?height=200&width=200", // Replace with actual image
+        "Designs, trains, and optimizes the CNN model for accurate malaria detection on blood-smear images.",
+      imageUrl: "/avatars/male-avatar.gif",
     },
     {
-      name: "Team Member 3",
+      name: "Adrian Ramadhan",
       role: "Software Engineer",
-      description: "Implemented server-side logic and API integrations.",
-      imageUrl: "/placeholder.svg?height=200&width=200", // Replace with actual image
+      description:
+        "Implements server-side logic, and integrates the ML model into the web application.",
+      imageUrl: "/avatars/male-avatar.gif",
     },
     {
-      name: "Team Member 4",
+      name: "Fitri Mauizah",
       role: "Data Scientist / Researcher",
       description:
-        "Conducted research and data analysis for malaria detection.",
-      imageUrl: "/placeholder.svg?height=200&width=200", // Replace with actual image
+        "Conducts data preprocessing, exploratory analysis, and validation of model performance metrics.",
+      imageUrl: "/avatars/female-avatar.gif",
     },
   ];
 
