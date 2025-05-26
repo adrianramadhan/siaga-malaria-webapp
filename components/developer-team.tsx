@@ -32,7 +32,7 @@ export function DeveloperTeam() {
       role: "Software Engineer",
       description:
         "Implements server-side logic, and integrates the ML model into the web application.",
-      imageUrl: "/avatars/male-avatar.gif",
+      imageUrl: "/pp.jpg",
     },
     {
       name: "Fitri Mauizah",

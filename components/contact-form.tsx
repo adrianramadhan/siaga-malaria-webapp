@@ -16,11 +16,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function ContactForm() {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -37,35 +39,97 @@ export function ContactForm() {
       ...prev,
       [field]: value,
     }));
+    // Clear error when user starts typing
+    if (error) setError(null);
+  };
+
+  const validateForm = () => {
+    if (!formData.name.trim()) {
+      setError("Name is required");
+      return false;
+    }
+    if (!formData.email.trim()) {
+      setError("Email is required");
+      return false;
+    }
+    if (!formData.subject) {
+      setError("Please select a subject");
+      return false;
+    }
+    if (!formData.message.trim()) {
+      setError("Message is required");
+      return false;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError("Please enter a valid email address");
+      return false;
+    }
+
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
+    // Validate form
+    if (!validateForm()) {
+      return;
+    }
+
     setLoading(true);
 
-    // Simulate form submission
     try {
-      // In a real application, you would send this data to your backend
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      toast.success("Message sent successfully!", {
-        description: "We'll get back to you within 24 hours.",
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
       });
 
-      // Reset form
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        organization: "",
-        role: "",
-        subject: "",
-        message: "",
-        newsletter: false,
-      });
-    } catch {
+      // Check if response is JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error(
+          "Server returned an invalid response. Please try again later."
+        );
+      }
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast.success("Message sent successfully!", {
+          description:
+            "We'll get back to you within 24 hours. Check your email for confirmation.",
+        });
+
+        // Reset form
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          organization: "",
+          role: "",
+          subject: "",
+          message: "",
+          newsletter: false,
+        });
+      } else {
+        throw new Error(data.error || data.message || "Failed to send message");
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "An unexpected error occurred";
+
+      setError(errorMessage);
       toast.error("Failed to send message", {
-        description: "Please try again later or contact us directly.",
+        description:
+          "Please try again later or contact us directly at adrianramadhan881@gmail.com",
       });
     } finally {
       setLoading(false);
@@ -82,6 +146,13 @@ export function ContactForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="name">Full Name *</Label>
@@ -136,7 +207,7 @@ export function ContactForm() {
             <Label htmlFor="role">Your Role</Label>
             <Select
               value={formData.role}
-              onValueChange={(value: string) => handleInputChange("role", value)}
+              onValueChange={(value) => handleInputChange("role", value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select your role" />
@@ -158,7 +229,7 @@ export function ContactForm() {
             <Label htmlFor="subject">Subject *</Label>
             <Select
               value={formData.subject}
-              onValueChange={(value: string) => handleInputChange("subject", value)}
+              onValueChange={(value) => handleInputChange("subject", value)}
               required
             >
               <SelectTrigger>
@@ -200,8 +271,8 @@ export function ContactForm() {
             <Checkbox
               id="newsletter"
               checked={formData.newsletter}
-              onCheckedChange={(checked: boolean) =>
-                handleInputChange("newsletter", checked)
+              onCheckedChange={(checked) =>
+                handleInputChange("newsletter", checked as boolean)
               }
             />
             <Label htmlFor="newsletter" className="text-sm">
