@@ -10,6 +10,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { loadModel, classifyImage } from "@/lib/model-loader";
 import Image from "next/image";
 import { MedicalReport } from "@/components/medical-report";
+import { ImagePreview } from "@/components/image-preview";
+import { ModelDebug } from "@/components/model-debug";
+import { waitForRef } from "@/lib/ref-utils";
 
 export function ImageUploader() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -20,8 +23,10 @@ export function ImageUploader() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modelLoaded, setModelLoaded] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
+  const imageRef = useRef<HTMLImageElement | null>(null);
 
   // Load the model on component mount
   useEffect(() => {
@@ -47,42 +52,74 @@ export function ImageUploader() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Reset previous prediction
+    // Reset previous prediction and preview
     setPrediction(null);
     setError(null);
+    setShowPreview(false);
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      setError("Please select a valid image file.");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image size should be less than 5MB.");
+      return;
+    }
 
     // Read and display the image
     const reader = new FileReader();
     reader.onload = (event) => {
       setSelectedImage(event.target?.result as string);
+      setShowPreview(true);
     };
     reader.readAsDataURL(file);
   };
 
   const handlePrediction = async () => {
-    if (!selectedImage || !imageRef.current || !modelLoaded) return;
+    if (!selectedImage || !modelLoaded) return;
 
     try {
       setIsLoading(true);
       setError(null);
 
+      // Wait for the image ref to be ready
+      const imageElement = await waitForRef(imageRef, 5000);
+
       // Wait for the image to be fully loaded
-      if (!imageRef.current.complete) {
+      if (!imageElement.complete) {
         await new Promise((resolve) => {
-          if (imageRef.current) {
-            imageRef.current.onload = resolve;
-          }
+          imageElement.onload = resolve;
         });
       }
 
       // Classify the image
-      const result = await classifyImage(imageRef.current);
+      const result = await classifyImage(imageElement);
       setPrediction(result);
     } catch (err) {
       console.error("Prediction error:", err);
-      setError(
-        "An error occurred during image classification. Please try again."
-      );
+      function hasMessageProperty(
+        error: unknown
+      ): error is { message: string } {
+        return (
+          typeof error === "object" &&
+          error !== null &&
+          "message" in error &&
+          typeof (error as { message?: unknown }).message === "string"
+        );
+      }
+
+      if (hasMessageProperty(err) && err.message === "Ref timeout") {
+        setError(
+          "Image loading timeout. Please try uploading the image again."
+        );
+      } else {
+        setError(
+          "An error occurred during image classification. Please try again."
+        );
+      }
     } finally {
       setIsLoading(false);
     }
@@ -92,13 +129,15 @@ export function ImageUploader() {
     setSelectedImage(null);
     setPrediction(null);
     setError(null);
+    setShowPreview(false);
+    setShowDebug(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto mb-12">
+    <div className="max-w-4xl mx-auto">
       <div className="mb-8 text-center">
         <h2 className="text-2xl font-bold text-gray-800 mb-2">
           Malaria Detection Tool
@@ -141,24 +180,34 @@ export function ImageUploader() {
               </div>
             ) : (
               <div className="w-full">
-                <div className="relative w-full max-w-md mx-auto aspect-square mb-4">
-                  <Image
-                    src={selectedImage || "/placeholder.svg"}
-                    alt="Blood smear sample"
-                    fill
-                    className="object-contain rounded-lg"
-                    ref={imageRef}
-                    sizes="(max-width: 768px) 100vw, 400px"
-                  />
-                </div>
+                {/* Hidden image for processing */}
+                <Image
+                  src={selectedImage || "/placeholder.svg"}
+                  alt="Blood smear sample"
+                  width={224}
+                  height={224}
+                  className="hidden"
+                  ref={imageRef}
+                  crossOrigin="anonymous"
+                  onLoad={() => console.log("Image loaded successfully")}
+                  onError={(e) => console.error("Image load error:", e)}
+                />
 
-                <div className="flex justify-center gap-4 mt-4">
+                <div className="flex justify-center gap-4 mb-6">
                   <Button
                     variant="outline"
                     onClick={handleReset}
                     disabled={isLoading}
                   >
                     Upload New Image
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowDebug(!showDebug)}
+                    disabled={isLoading}
+                    size="sm"
+                  >
+                    {showDebug ? "Hide Debug" : "Show Debug"}
                   </Button>
                   <Button
                     onClick={handlePrediction}
@@ -179,6 +228,20 @@ export function ImageUploader() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Debug Component */}
+      {showDebug && selectedImage && <ModelDebug imageRef={imageRef} />}
+
+      {/* Image Preview */}
+      {showPreview && selectedImage && (
+        <ImagePreview
+          originalImage={selectedImage}
+          imageRef={imageRef}
+          onImageProcessed={() => {
+            console.log("Image processed to grayscale");
+          }}
+        />
+      )}
 
       {prediction && (
         <Card
@@ -214,6 +277,7 @@ export function ImageUploader() {
           </CardContent>
         </Card>
       )}
+
       {prediction && (
         <MedicalReport
           prediction={prediction.prediction}
@@ -232,7 +296,7 @@ export function ImageUploader() {
 
       <div className="bg-white border rounded-lg p-6" id="about">
         <h2 className="text-xl font-bold mb-4">
-          About Siaga Malaria Nusantara
+          About Siaga Malaria Nusantara Nusantara
         </h2>
         <p className="mb-4">
           Malaria remains a serious health issue in Indonesia, especially in
