@@ -17,15 +17,14 @@ export function DeveloperTeam() {
       role: "Project Lead",
       description:
         "Responsible for project management, and creating web mockups using Figma.",
-      imageUrl:
-        "https://www.freepik.com/free-vector/hand-drawn-avatar-set-illustration_11223345.htm",
+      imageUrl: "/image/naila.jpeg",
     },
     {
       name: "Brian Aji Pamungkas",
       role: "Machine Learning Engineer",
       description:
         "Designs, trains, and optimizes the CNN model for accurate malaria detection on blood-smear images.",
-      imageUrl: "/avatars/male-avatar.gif",
+      imageUrl: "/image/brian.png",
     },
     {
       name: "Adrian Ramadhan",
@@ -39,7 +38,7 @@ export function DeveloperTeam() {
       role: "Data Scientist / Researcher",
       description:
         "Conducts data preprocessing, exploratory analysis, and validation of model performance metrics.",
-      imageUrl: "/avatars/female-avatar.gif",
+      imageUrl: "/image/fitri.jpg",
     },
   ];
 
