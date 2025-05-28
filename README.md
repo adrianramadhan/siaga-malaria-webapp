@@ -57,3 +57,4 @@ A Next.js application for rapid, AI-powered malaria screening and automated medi
   ![alt text](/public/image/report.png)
   ![alt text](/public/image/result.png)
 ### Figma Mockups
+https://www.figma.com/proto/5KlgRPbByHH9zA90iWofbc/MockUp?node-id=1-2&t=t0SpaRn3M4uaCiFs-1
