@@ -9,17 +9,32 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, FileText, Download, Copy, Settings } from "lucide-react";
+import {
+  Loader2,
+  FileText,
+  Download,
+  Copy,
+  Settings,
+  Globe,
+} from "lucide-react";
 import { generateMedicalReport, initGeminiAPI } from "@/lib/gemini-api";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { toast } from "sonner";
 
 interface MedicalReportProps {
   prediction: "Parasitized" | "Uninfected";
@@ -33,7 +48,9 @@ export function MedicalReport({ prediction, confidence }: MedicalReportProps) {
   const [apiKey, setApiKey] = useState("");
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [hasEnvApiKey, setHasEnvApiKey] = useState(false);
+  const [language, setLanguage] = useState<"id" | "en">("id");
   const [patientInfo, setPatientInfo] = useState({
+    name: "",
     age: "",
     gender: "",
     symptoms: "",
@@ -53,8 +70,8 @@ export function MedicalReport({ prediction, confidence }: MedicalReportProps) {
 
       // Initialize the API with the provided key or use env variable
       try {
-        // Only pass custom API key if user entered one, otherwise use env variable
-        initGeminiAPI(apiKey || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "");
+        // Only pass custom API key if user entered one
+        initGeminiAPI(apiKey || undefined);
       } catch {
         setError("API key not found. Please provide a Gemini API key.");
         setLoading(false);
@@ -66,11 +83,13 @@ export function MedicalReport({ prediction, confidence }: MedicalReportProps) {
         prediction,
         confidence,
         {
+          name: patientInfo.name || undefined,
           age: patientInfo.age ? Number.parseInt(patientInfo.age) : undefined,
           gender: patientInfo.gender || undefined,
           symptoms: patientInfo.symptoms || undefined,
           location: patientInfo.location || undefined,
-        }
+        },
+        language
       );
 
       setReport(generatedReport ?? null);
@@ -87,6 +106,9 @@ export function MedicalReport({ prediction, confidence }: MedicalReportProps) {
   const handleCopyReport = () => {
     if (report) {
       navigator.clipboard.writeText(report);
+      toast.success("Copied to clipboard", {
+        description: "The report has been copied to your clipboard.",
+      });
     }
   };
 
@@ -102,6 +124,10 @@ export function MedicalReport({ prediction, confidence }: MedicalReportProps) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+
+    toast.success("Report downloaded", {
+      description: "The text report has been downloaded successfully.",
+    });
   };
 
   return (
@@ -115,12 +141,35 @@ export function MedicalReport({ prediction, confidence }: MedicalReportProps) {
       <CardContent>
         {report ? (
           <div className="space-y-4">
-            <div className="whitespace-pre-wrap bg-gray-50 p-4 rounded-md border text-sm">
+            <div className="whitespace-pre-wrap bg-gray-50 p-4 rounded-md border text-sm font-mono max-h-96 overflow-y-auto">
               {report}
             </div>
           </div>
         ) : (
           <div className="space-y-4">
+            {/* Language Selection */}
+            <div className="flex items-center gap-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <Globe className="h-5 w-5 text-blue-600" />
+              <div className="flex-1">
+                <Label htmlFor="language">
+                  Report Language / Bahasa Laporan
+                </Label>
+                <Select
+                  value={language}
+                  onValueChange={(value: "id" | "en") => setLanguage(value)}
+                >
+                  <SelectTrigger className="w-full mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="id">🇮🇩 Bahasa Indonesia</SelectItem>
+                    <SelectItem value="en">🇺🇸 English</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* API Key Settings */}
             <Collapsible
               open={showApiKeyInput}
               onOpenChange={setShowApiKeyInput}
@@ -164,52 +213,110 @@ export function MedicalReport({ prediction, confidence }: MedicalReportProps) {
               </CollapsibleContent>
             </Collapsible>
 
+            {/* Patient Information */}
             <div className="space-y-4">
-              <h3 className="text-sm font-medium">Patient Information</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <h3 className="text-sm font-medium">
+                {language === "id" ? "Informasi Pasien" : "Patient Information"}
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="age">Age</Label>
+                  <Label htmlFor="name">
+                    {language === "id" ? "Nama Lengkap" : "Full Name"}
+                  </Label>
+                  <Input
+                    id="name"
+                    placeholder={
+                      language === "id" ? "Nama pasien" : "Patient name"
+                    }
+                    value={patientInfo.name}
+                    onChange={(e) =>
+                      setPatientInfo({ ...patientInfo, name: e.target.value })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="age">
+                    {language === "id" ? "Usia" : "Age"}
+                  </Label>
                   <Input
                     id="age"
                     type="number"
-                    placeholder="Patient age"
+                    placeholder={
+                      language === "id" ? "Usia pasien" : "Patient age"
+                    }
                     value={patientInfo.age}
                     onChange={(e) =>
                       setPatientInfo({ ...patientInfo, age: e.target.value })
                     }
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="gender">Gender</Label>
-                  <Input
-                    id="gender"
-                    placeholder="Patient gender"
+                  <Label htmlFor="gender">
+                    {language === "id" ? "Jenis Kelamin" : "Gender"}
+                  </Label>
+                  <Select
                     value={patientInfo.gender}
+                    onValueChange={(value) =>
+                      setPatientInfo({ ...patientInfo, gender: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={
+                          language === "id"
+                            ? "Pilih jenis kelamin"
+                            : "Select gender"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Laki-laki">
+                        {language === "id" ? "Laki-laki" : "Male"}
+                      </SelectItem>
+                      <SelectItem value="Perempuan">
+                        {language === "id" ? "Perempuan" : "Female"}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="location">
+                    {language === "id" ? "Lokasi" : "Location"}
+                  </Label>
+                  <Input
+                    id="location"
+                    placeholder={
+                      language === "id" ? "Kota, Indonesia" : "City, Indonesia"
+                    }
+                    value={patientInfo.location}
                     onChange={(e) =>
-                      setPatientInfo({ ...patientInfo, gender: e.target.value })
+                      setPatientInfo({
+                        ...patientInfo,
+                        location: e.target.value,
+                      })
                     }
                   />
                 </div>
               </div>
+
               <div>
-                <Label htmlFor="symptoms">Symptoms</Label>
+                <Label htmlFor="symptoms">
+                  {language === "id" ? "Keluhan Utama" : "Chief Complaint"}
+                </Label>
                 <Textarea
                   id="symptoms"
-                  placeholder="Describe patient symptoms"
+                  placeholder={
+                    language === "id"
+                      ? "Jelaskan keluhan pasien"
+                      : "Describe patient symptoms"
+                  }
                   value={patientInfo.symptoms}
                   onChange={(e) =>
                     setPatientInfo({ ...patientInfo, symptoms: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  placeholder="Patient location in Indonesia"
-                  value={patientInfo.location}
-                  onChange={(e) =>
-                    setPatientInfo({ ...patientInfo, location: e.target.value })
                   }
                 />
               </div>
@@ -223,8 +330,12 @@ export function MedicalReport({ prediction, confidence }: MedicalReportProps) {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generating Report...
+                  {language === "id"
+                    ? "Membuat Laporan..."
+                    : "Generating Report..."}
                 </>
+              ) : language === "id" ? (
+                "Buat Laporan Medis"
               ) : (
                 "Generate Medical Report"
               )}
@@ -242,11 +353,11 @@ export function MedicalReport({ prediction, confidence }: MedicalReportProps) {
         <CardFooter className="flex justify-end gap-2">
           <Button variant="outline" size="sm" onClick={handleCopyReport}>
             <Copy className="h-4 w-4 mr-2" />
-            Copy
+            {language === "id" ? "Salin" : "Copy"}
           </Button>
           <Button variant="outline" size="sm" onClick={handleDownloadReport}>
             <Download className="h-4 w-4 mr-2" />
-            Download
+            {language === "id" ? "Unduh TXT" : "Download TXT"}
           </Button>
         </CardFooter>
       )}
