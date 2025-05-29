@@ -60,68 +60,62 @@ Buatkan laporan medis profesional untuk deteksi parasit malaria dengan format ya
 
 # Laporan Medis untuk Deteksi Parasit Malaria (Hasil ${resultStatus})
 
-**Informasi Pasien:**
-- **Nama:** ${patientName}
-- **Usia:** ${patientAge} tahun
-- **Jenis Kelamin:** ${patientGender}
-- **Lokasi:** ${patientLocation}
-- **Tanggal:** ${currentDate}
+Informasi Pasien:
+- Nama: ${patientName}
+- Usia: ${patientAge} tahun
+- Jenis Kelamin: ${patientGender}
+- Lokasi: ${patientLocation}
+- Tanggal: ${currentDate}
 
-**Riwayat:**
-- **Keluhan Utama:** ${patientSymptoms}
+Riwayat:
+- Keluhan Utama: ${patientSymptoms}
 
-**Pemeriksaan:**
-- **Tes Diagnostik:** Deteksi Parasit Malaria menggunakan AI (Analisis Mikroskopi Digital)
-- **Hasil:** ${resultStatus} untuk parasit malaria
-- **Tingkat Kepercayaan:** ${confidencePercentage}%
+Pemeriksaan:
+- Tes Diagnostik: Deteksi Parasit Malaria menggunakan AI (Analisis Mikroskopi Digital)
+- Hasil: ${resultStatus} untuk parasit malaria
+- Tingkat Kepercayaan: ${confidencePercentage}%
 
-**Diagnosis:**
+Diagnosis:
 - ${isPositive ? "Infeksi malaria" : "Infeksi malaria tidak mungkin"}
 
 Lanjutkan laporan dengan:
-1. **Penilaian Klinis** yang komprehensif berdasarkan hasil ${resultStatus}
-2. **Rencana Penatalaksanaan** yang detail dan sesuai dengan kondisi Indonesia
-3. **Rekomendasi Tindak Lanjut** yang spesifik
-4. **Langkah Pencegahan** yang relevan untuk Indonesia
+1. Penilaian Klinis yang komprehensif berdasarkan hasil ${resultStatus}
+2. Rencana Penatalaksanaan yang detail dan sesuai dengan kondisi Indonesia
+3. Rekomendasi Tindak Lanjut yang spesifik
+4. Langkah Pencegahan yang relevan untuk Indonesia
 
 Pastikan laporan menggunakan terminologi medis yang tepat, mengacu pada pedoman kesehatan Indonesia, dan memberikan rekomendasi yang praktis untuk kondisi di Indonesia.
-
-**Dokter:** [Nama Dokter/Tanda Tangan]
-[Nama Fasilitas Medis]
 `
       : `
 Generate a professional medical report for malaria parasite detection with the following structured format:
 
 # Medical Report for Malaria Parasite Detection (${resultStatusEn} Result)
 
-**Patient Information:**
-- **Name:** ${patientName}
-- **Age:** ${patientAge} years
-- **Gender:** ${patientGender}
-- **Location:** ${patientLocation}
-- **Date:** ${currentDate}
+Patient Information:
+- Name: ${patientName}
+- Age: ${patientAge} years
+- Gender: ${patientGender}
+- Location: ${patientLocation}
+- Date: ${currentDate}
 
-**History:**
-- **Chief Complaint:** ${patientSymptoms}
+History:
+- Chief Complaint: ${patientSymptoms}
 
-**Investigations:**
-- **Diagnostic Test:** Malaria Parasite Detection using AI (Digital Microscopy Analysis)
-- **Results:** ${resultStatusEn} for malaria parasites
-- **Confidence Level:** ${confidencePercentage}%
+Investigations:
+- Diagnostic Test: Malaria Parasite Detection using AI (Digital Microscopy Analysis)
+- Results: ${resultStatusEn} for malaria parasites
+- Confidence Level: ${confidencePercentage}%
 
-**Diagnosis:**
+Diagnosis:
 - ${isPositive ? "Malaria infection" : "Malaria infection unlikely"}
 
 Continue the report with:
-1. **Clinical Assessment** that is comprehensive based on the ${resultStatusEn} result
-2. **Management Plan** that is detailed and appropriate for Indonesian healthcare context
-3. **Follow-Up Recommendations** that are specific
-4. **Preventive Measures** that are relevant for Indonesia
+1. Clinical Assessment that is comprehensive based on the ${resultStatusEn} result
+2. Management Plan that is detailed and appropriate for Indonesian healthcare context
+3. Follow-Up Recommendations that are specific
+4. Preventive Measures that are relevant for Indonesia
 
 Ensure the report uses proper medical terminology, references Indonesian health guidelines, and provides practical recommendations for conditions in Indonesia.
-
-**Physician:** [Physician's Name/Signature]
-[Medical Facility Name]
 `;
 
   try {
