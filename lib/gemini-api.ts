@@ -56,66 +56,138 @@ export async function generateMedicalReport(
   const prompt =
     language === "id"
       ? `
-Buatkan laporan medis profesional untuk deteksi parasit malaria dengan format yang terstruktur seperti contoh berikut:
+Buatkan laporan medis profesional untuk deteksi parasit malaria dengan format yang terstruktur dan rapi seperti contoh berikut:
 
 # Laporan Medis untuk Deteksi Parasit Malaria (Hasil ${resultStatus})
 
-Informasi Pasien:
-- Nama: ${patientName}
-- Usia: ${patientAge} tahun
-- Jenis Kelamin: ${patientGender}
-- Lokasi: ${patientLocation}
-- Tanggal: ${currentDate}
+**Informasi Pasien:**
+- **Nama:** ${patientName}
+- **Usia:** ${patientAge} tahun
+- **Jenis Kelamin:** ${patientGender}
+- **Lokasi:** ${patientLocation}
+- **Tanggal:** ${currentDate}
 
-Riwayat:
-- Keluhan Utama: ${patientSymptoms}
+**Riwayat:**
+- **Keluhan Utama:** ${patientSymptoms}
 
-Pemeriksaan:
-- Tes Diagnostik: Deteksi Parasit Malaria menggunakan AI (Analisis Mikroskopi Digital)
-- Hasil: ${resultStatus} untuk parasit malaria
-- Tingkat Kepercayaan: ${confidencePercentage}%
+**Pemeriksaan:**
+- **Tes Diagnostik:** Deteksi Parasit Malaria menggunakan AI (Analisis Mikroskopi Digital)
+- **Hasil:** ${resultStatus} untuk parasit malaria
+- **Tingkat Kepercayaan:** ${confidencePercentage}%
 
-Diagnosis:
+**Diagnosis:**
 - ${isPositive ? "Infeksi malaria" : "Infeksi malaria tidak mungkin"}
 
-Lanjutkan laporan dengan:
-1. Penilaian Klinis yang komprehensif berdasarkan hasil ${resultStatus}
-2. Rencana Penatalaksanaan yang detail dan sesuai dengan kondisi Indonesia
-3. Rekomendasi Tindak Lanjut yang spesifik
-4. Langkah Pencegahan yang relevan untuk Indonesia
+## 1. Penilaian Klinis
 
-Pastikan laporan menggunakan terminologi medis yang tepat, mengacu pada pedoman kesehatan Indonesia, dan memberikan rekomendasi yang praktis untuk kondisi di Indonesia.
+Berdasarkan hasil pemeriksaan deteksi parasit malaria dengan AI yang menunjukkan hasil ${resultStatus}, pasien didiagnosis ${
+          isPositive ? "terinfeksi malaria" : "tidak terinfeksi malaria"
+        }. 
+
+Buatlah penilaian klinis yang komprehensif dengan:
+- Evaluasi kondisi pasien berdasarkan hasil ${resultStatus}
+- Pemeriksaan fisik yang diperlukan
+- Pemeriksaan penunjang yang direkomendasikan
+- Tanda-tanda yang perlu diperhatikan
+
+## 2. Rencana Penatalaksanaan
+
+Buatlah rencana penatalaksanaan yang detail meliputi:
+- Terapi anti-malaria sesuai pedoman Indonesia
+- Terapi simtomatik
+- Edukasi pasien dan keluarga
+- Monitoring yang diperlukan
+
+## 3. Rekomendasi Tindak Lanjut
+
+Berikan rekomendasi tindak lanjut yang spesifik:
+- Jadwal evaluasi lanjutan
+- Pemantauan efek samping obat
+- Konseling pasca-pengobatan
+- Kapan harus kembali ke dokter
+
+## 4. Langkah Pencegahan
+
+Berikan langkah pencegahan yang relevan untuk Indonesia:
+- Penggunaan kelambu berinsektisida
+- Penggunaan repelan nyamuk
+- Pembersihan lingkungan
+- Edukasi kesehatan masyarakat
+
+PENTING: 
+- Gunakan format markdown yang konsisten
+- Berikan jarak yang tepat antar paragraf
+- Gunakan bullet points untuk daftar
+- JANGAN sertakan bagian tanda tangan dokter atau nama fasilitas medis di akhir laporan
+- Pastikan setiap bagian terpisah dengan jelas
+- Gunakan sub-heading yang jelas untuk setiap bagian
 `
       : `
-Generate a professional medical report for malaria parasite detection with the following structured format:
+Generate a professional medical report for malaria parasite detection with the following structured and well-formatted layout:
 
 # Medical Report for Malaria Parasite Detection (${resultStatusEn} Result)
 
-Patient Information:
-- Name: ${patientName}
-- Age: ${patientAge} years
-- Gender: ${patientGender}
-- Location: ${patientLocation}
-- Date: ${currentDate}
+**Patient Information:**
+- **Name:** ${patientName}
+- **Age:** ${patientAge} years
+- **Gender:** ${patientGender}
+- **Location:** ${patientLocation}
+- **Date:** ${currentDate}
 
-History:
-- Chief Complaint: ${patientSymptoms}
+**History:**
+- **Chief Complaint:** ${patientSymptoms}
 
-Investigations:
-- Diagnostic Test: Malaria Parasite Detection using AI (Digital Microscopy Analysis)
-- Results: ${resultStatusEn} for malaria parasites
-- Confidence Level: ${confidencePercentage}%
+**Investigations:**
+- **Diagnostic Test:** Malaria Parasite Detection using AI (Digital Microscopy Analysis)
+- **Results:** ${resultStatusEn} for malaria parasites
+- **Confidence Level:** ${confidencePercentage}%
 
-Diagnosis:
+**Diagnosis:**
 - ${isPositive ? "Malaria infection" : "Malaria infection unlikely"}
 
-Continue the report with:
-1. Clinical Assessment that is comprehensive based on the ${resultStatusEn} result
-2. Management Plan that is detailed and appropriate for Indonesian healthcare context
-3. Follow-Up Recommendations that are specific
-4. Preventive Measures that are relevant for Indonesia
+## 1. Clinical Assessment
 
-Ensure the report uses proper medical terminology, references Indonesian health guidelines, and provides practical recommendations for conditions in Indonesia.
+Based on the AI malaria parasite detection results showing ${resultStatusEn}, the patient is diagnosed as ${
+          isPositive ? "infected with malaria" : "not infected with malaria"
+        }.
+
+Provide comprehensive clinical assessment including:
+- Patient condition evaluation based on ${resultStatusEn} result
+- Required physical examination
+- Recommended laboratory investigations
+- Warning signs to monitor
+
+## 2. Management Plan
+
+Create detailed management plan covering:
+- Anti-malarial therapy according to Indonesian guidelines
+- Symptomatic treatment
+- Patient and family education
+- Required monitoring
+
+## 3. Follow-Up Recommendations
+
+Provide specific follow-up recommendations:
+- Follow-up evaluation schedule
+- Drug side effect monitoring
+- Post-treatment counseling
+- When to return to healthcare provider
+
+## 4. Preventive Measures
+
+Provide preventive measures relevant for Indonesia:
+- Use of insecticide-treated nets
+- Mosquito repellent application
+- Environmental management
+- Community health education
+
+IMPORTANT:
+- Use consistent markdown formatting
+- Provide proper spacing between paragraphs
+- Use bullet points for lists
+- DO NOT include any physician signature or medical facility name at the end of the report
+- Ensure each section is clearly separated
+- Use clear sub-headings for each section
 `;
 
   try {
