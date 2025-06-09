@@ -18,12 +18,14 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 interface ImagePreviewProps {
   originalImage: string;
   imageRef: React.RefObject<HTMLImageElement | null>;
-  onImageProcessed?: (grayscaleImage: string) => void;
+  colorMode: "rgb" | "grayscale";
+  onImageProcessed?: (processedImage: string) => void;
 }
 
 export function ImagePreview({
   originalImage,
   imageRef,
+  colorMode,
   onImageProcessed,
 }: ImagePreviewProps) {
   const [grayscaleImage, setGrayscaleImage] = useState<string | null>(null);
@@ -61,21 +63,30 @@ export function ImagePreview({
           src: loadedImage.src.substring(0, 50) + "...",
           dimensions: `${loadedImage.naturalWidth}x${loadedImage.naturalHeight}`,
           complete: loadedImage.complete,
+          mode: colorMode,
         });
 
-        // Convert to grayscale
-        const grayscale = await convertToGrayscale(loadedImage);
-        setGrayscaleImage(grayscale);
-        console.log("Grayscale conversion successful");
+        let processedImage: string;
+
+        if (colorMode === "grayscale") {
+          // Convert to grayscale
+          processedImage = await convertToGrayscale(loadedImage);
+          setGrayscaleImage(processedImage);
+          console.log("Grayscale conversion successful");
+        } else {
+          // Keep RGB, just resize
+          processedImage = await resizeImage(loadedImage, 224);
+          setGrayscaleImage(null); // Clear grayscale when using RGB
+          console.log("RGB resize successful");
+        }
 
         // Resize to model input size for preview
         const resized = await resizeImage(loadedImage, 224);
         setResizedImage(resized);
-        console.log("Resize successful");
 
         // Notify parent component
         if (onImageProcessed) {
-          onImageProcessed(grayscale);
+          onImageProcessed(processedImage);
         }
       } catch (error) {
         console.error("Error processing image:", error);
@@ -88,7 +99,7 @@ export function ImagePreview({
     };
 
     processImage();
-  }, [originalImage, imageRef, onImageProcessed]);
+  }, [originalImage, imageRef, colorMode, onImageProcessed]);
 
   return (
     <Card className="mb-4">
@@ -171,16 +182,23 @@ export function ImagePreview({
             </div>
             <div className="text-center">
               <p className="text-sm font-medium">
-                {showGrayscale ? "Processed for Analysis" : "Original Upload"}
+                {showGrayscale && colorMode === "grayscale"
+                  ? "Processed for Analysis"
+                  : colorMode === "rgb"
+                  ? "RGB Mode"
+                  : "Original Upload"}
               </p>
               <p className="text-xs text-gray-500">
-                {showGrayscale
+                {showGrayscale && colorMode === "grayscale"
                   ? "This is how the AI model will analyze your image"
+                  : colorMode === "rgb"
+                  ? "Analyzing with original colors"
                   : "Your uploaded blood smear image"}
               </p>
               {imageInfo && (
                 <p className="text-xs text-gray-400 mt-1">
-                  Dimensions: {imageInfo.naturalWidth}x{imageInfo.naturalHeight}
+                  Dimensions: {imageInfo.naturalWidth}x{imageInfo.naturalHeight}{" "}
+                  | Mode: {colorMode.toUpperCase()}
                 </p>
               )}
             </div>
@@ -188,7 +206,9 @@ export function ImagePreview({
 
           {/* Side-by-side comparison */}
           <div className="space-y-4">
-            <h3 className="text-sm font-medium">Processing Steps</h3>
+            <h3 className="text-sm font-medium">
+              Processing Steps ({colorMode.toUpperCase()} Mode)
+            </h3>
 
             {/* Original thumbnail */}
             <div className="flex items-center gap-3 p-3 border rounded-lg">
@@ -214,13 +234,17 @@ export function ImagePreview({
               </div>
             </div>
 
-            {/* Grayscale thumbnail */}
+            {/* Processing step */}
             <div className="flex items-center gap-3 p-3 border rounded-lg">
               <div className="relative w-16 h-16 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                {grayscaleImage ? (
+                {(colorMode === "grayscale" ? grayscaleImage : resizedImage) ? (
                   <Image
-                    src={grayscaleImage || "/placeholder.svg"}
-                    alt="Grayscale"
+                    src={
+                      (colorMode === "grayscale"
+                        ? grayscaleImage
+                        : resizedImage) || "/placeholder.svg"
+                    }
+                    alt="Processed"
                     fill
                     className="object-cover"
                     sizes="64px"
@@ -236,9 +260,16 @@ export function ImagePreview({
                 )}
               </div>
               <div>
-                <p className="text-sm font-medium">2. Grayscale Conversion</p>
+                <p className="text-sm font-medium">
+                  2.{" "}
+                  {colorMode === "grayscale"
+                    ? "Grayscale Conversion"
+                    : "Color Preservation"}
+                </p>
                 <p className="text-xs text-gray-500">
-                  Enhanced for malaria parasite detection
+                  {colorMode === "grayscale"
+                    ? "Enhanced for malaria parasite detection"
+                    : "Maintaining original RGB colors"}
                 </p>
                 {error && <p className="text-xs text-red-500">Failed</p>}
               </div>
@@ -279,13 +310,12 @@ export function ImagePreview({
         {/* Processing info */}
         <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <h4 className="text-sm font-medium text-blue-800 mb-2">
-            Why Grayscale?
+            {colorMode === "grayscale" ? "Why Grayscale?" : "Why RGB?"}
           </h4>
           <p className="text-sm text-blue-700">
-            Malaria parasites are more easily detected in grayscale images
-            because it enhances the contrast between infected and healthy red
-            blood cells. The AI model has been trained specifically on grayscale
-            blood smear images for optimal accuracy.
+            {colorMode === "grayscale"
+              ? "Malaria parasites are more easily detected in grayscale images because it enhances the contrast between infected and healthy red blood cells. The AI model has been trained specifically on grayscale blood smear images for optimal accuracy."
+              : "RGB mode preserves the original color information which may be useful for certain types of analysis. However, grayscale mode typically provides better accuracy for malaria parasite detection."}
           </p>
         </div>
 

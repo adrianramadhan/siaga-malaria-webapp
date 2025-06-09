@@ -17,7 +17,10 @@ export async function loadModel() {
   }
 }
 
-export async function classifyImage(imageElement: HTMLImageElement): Promise<{
+export async function classifyImage(
+  imageElement: HTMLImageElement,
+  colorMode: "rgb" | "grayscale" = "grayscale"
+): Promise<{
   prediction: "Parasitized" | "Uninfected";
   confidence: number;
 }> {
@@ -32,6 +35,7 @@ export async function classifyImage(imageElement: HTMLImageElement): Promise<{
     console.log("Classifying image:", {
       dimensions: `${loadedImage.naturalWidth}x${loadedImage.naturalHeight}`,
       complete: loadedImage.complete,
+      mode: colorMode,
     });
 
     // Create canvas for preprocessing
@@ -52,7 +56,7 @@ export async function classifyImage(imageElement: HTMLImageElement): Promise<{
     // Draw and resize image
     ctx.drawImage(loadedImage, 0, 0, 224, 224);
 
-    // Get image data and convert to grayscale
+    // Get image data
     const imageData = ctx.getImageData(0, 0, 224, 224);
     const data = imageData.data;
 
@@ -61,29 +65,57 @@ export async function classifyImage(imageElement: HTMLImageElement): Promise<{
       throw new Error("No image data retrieved from canvas");
     }
 
-    // Create grayscale array (single channel)
-    const grayscaleData = new Float32Array(224 * 224);
+    let tensorData: Float32Array;
+    let tensorShape: [number, number, number, number];
 
-    // Convert to grayscale and store in single channel array
-    for (let i = 0; i < data.length; i += 4) {
-      const red = data[i];
-      const green = data[i + 1];
-      const blue = data[i + 2];
+    if (colorMode === "grayscale") {
+      // Create grayscale array (single channel)
+      const grayscaleData = new Float32Array(224 * 224);
 
-      // Calculate grayscale value using luminance formula
-      const grayscale = 0.299 * red + 0.587 * green + 0.114 * blue;
+      // Convert to grayscale and store in single channel array
+      for (let i = 0; i < data.length; i += 4) {
+        const red = data[i];
+        const green = data[i + 1];
+        const blue = data[i + 2];
 
-      // Normalize to 0-1 range and store in single channel array
-      grayscaleData[i / 4] = grayscale / 255.0;
+        // Calculate grayscale value using luminance formula
+        const grayscale = 0.299 * red + 0.587 * green + 0.114 * blue;
+
+        // Normalize to 0-1 range and store in single channel array
+        grayscaleData[i / 4] = grayscale / 255.0;
+      }
+
+      tensorData = grayscaleData;
+      tensorShape = [1, 224, 224, 1];
+    } else {
+      // Create RGB array (three channels)
+      const rgbData = new Float32Array(224 * 224 * 3);
+
+      // Store RGB values in separate channels
+      for (let i = 0; i < data.length; i += 4) {
+        const pixelIndex = i / 4;
+        const red = data[i] / 255.0;
+        const green = data[i + 1] / 255.0;
+        const blue = data[i + 2] / 255.0;
+
+        // Store in RGB format [R, G, B, R, G, B, ...]
+        rgbData[pixelIndex * 3] = red;
+        rgbData[pixelIndex * 3 + 1] = green;
+        rgbData[pixelIndex * 3 + 2] = blue;
+      }
+
+      tensorData = rgbData;
+      tensorShape = [1, 224, 224, 3];
     }
 
-    // Validate grayscale data
-    const minVal = Math.min(...grayscaleData);
-    const maxVal = Math.max(...grayscaleData);
-    console.log("Grayscale data stats:", {
+    // Validate tensor data
+    const minVal = Math.min(...tensorData);
+    const maxVal = Math.max(...tensorData);
+    console.log(`${colorMode.toUpperCase()} data stats:`, {
       min: minVal,
       max: maxVal,
-      length: grayscaleData.length,
+      length: tensorData.length,
+      shape: tensorShape,
     });
 
     if (maxVal === 0) {
@@ -92,8 +124,8 @@ export async function classifyImage(imageElement: HTMLImageElement): Promise<{
       );
     }
 
-    // Create tensor from grayscale data with correct shape [1, 224, 224, 1]
-    const tensor = tf.tensor4d(grayscaleData, [1, 224, 224, 1]);
+    // Create tensor from data with correct shape
+    const tensor = tf.tensor4d(tensorData, tensorShape);
 
     try {
       // Run inference
@@ -102,7 +134,7 @@ export async function classifyImage(imageElement: HTMLImageElement): Promise<{
       // Get the prediction value (0-1)
       const value = predictions.dataSync()[0];
 
-      console.log("Model prediction:", value);
+      console.log(`Model prediction (${colorMode}):`, value);
 
       // Clean up tensors
       tensor.dispose();

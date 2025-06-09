@@ -27,6 +27,7 @@ export function ImageUploader() {
   const [showDebug, setShowDebug] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
+  const [colorMode, setColorMode] = useState<"rgb" | "grayscale">("grayscale");
 
   // Load the model on component mount
   useEffect(() => {
@@ -193,35 +194,78 @@ export function ImageUploader() {
                   onError={(e) => console.error("Image load error:", e)}
                 />
 
-                <div className="flex justify-center gap-4 mb-6">
-                  <Button
-                    variant="outline"
-                    onClick={handleReset}
-                    disabled={isLoading}
-                  >
-                    Upload New Image
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowDebug(!showDebug)}
-                    disabled={isLoading}
-                    size="sm"
-                  >
-                    {showDebug ? "Hide Debug" : "Show Debug"}
-                  </Button>
-                  <Button
-                    onClick={handlePrediction}
-                    disabled={isLoading || !modelLoaded}
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      "Analyze Image"
-                    )}
-                  </Button>
+                <div className="flex flex-col gap-4 mb-6">
+                  {/* Color Mode Selection */}
+                  <div className="bg-gray-50 p-4 rounded-lg border">
+                    <h3 className="text-sm font-medium mb-3">
+                      Analysis Mode / Mode Analisis
+                    </h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button
+                        variant={colorMode === "rgb" ? "default" : "outline"}
+                        onClick={() => setColorMode("rgb")}
+                        className="flex flex-col items-center p-4 h-auto"
+                      >
+                        <div className="w-8 h-8 bg-gradient-to-r from-red-400 via-green-400 to-blue-400 rounded mb-2"></div>
+                        <span className="font-medium">RGB Color</span>
+                        <span className="text-xs text-gray-500 mt-1">
+                          Original Color
+                        </span>
+                      </Button>
+                      <Button
+                        variant={
+                          colorMode === "grayscale" ? "default" : "outline"
+                        }
+                        onClick={() => setColorMode("grayscale")}
+                        className="flex flex-col items-center p-4 h-auto"
+                      >
+                        <div className="w-8 h-8 bg-gradient-to-r from-gray-300 to-gray-600 rounded mb-2"></div>
+                        <span className="font-medium">Grayscale</span>
+                        <span className="text-xs text-gray-500 mt-1">
+                          Enhanced detection
+                        </span>
+                      </Button>
+                    </div>
+                    <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded text-sm">
+                      <p className="text-blue-700">
+                        {colorMode === "rgb"
+                          ? "🎨 RGB mode preserves original colors but may have lower detection accuracy."
+                          : "⚫ Grayscale mode enhances parasite detection by improving contrast between infected and healthy cells."}
+                      </p>
+                    </div>
+                  </div>
+                  {/* Action Button */}
+                  <div className="flex justify-center gap-4">
+                    <Button
+                      variant="outline"
+                      onClick={handleReset}
+                      disabled={isLoading}
+                    >
+                      Upload New Image
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowDebug(!showDebug)}
+                      disabled={isLoading}
+                      size="sm"
+                    >
+                      {showDebug ? "Hide Debug" : "Show Debug"}
+                    </Button>
+                    <Button
+                      onClick={handlePrediction}
+                      disabled={isLoading || !modelLoaded}
+                      className="px-8"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>Analyze Image ({colorMode.toUpperCase()})</>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
@@ -230,15 +274,18 @@ export function ImageUploader() {
       </Card>
 
       {/* Debug Component */}
-      {showDebug && selectedImage && <ModelDebug imageRef={imageRef} />}
+      {showDebug && selectedImage && (
+        <ModelDebug imageRef={imageRef} colorMode={colorMode} />
+      )}
 
       {/* Image Preview */}
       {showPreview && selectedImage && (
         <ImagePreview
           originalImage={selectedImage}
           imageRef={imageRef}
+          colorMode={colorMode}
           onImageProcessed={() => {
-            console.log("Image processed to grayscale");
+            console.log(`Image processed to ${colorMode} mode`);
           }}
         />
       )}
@@ -265,7 +312,7 @@ export function ImageUploader() {
                     : "No Malaria Parasites Detected"}
                 </h3>
                 <p className="text-sm">
-                  Confidence: {Math.round(prediction.confidence * 100)}%
+                  Accuracy: {Math.round(prediction.confidence * 100)}%
                 </p>
                 <p className="text-sm mt-2 text-gray-600">
                   {prediction.prediction === "Parasitized"
