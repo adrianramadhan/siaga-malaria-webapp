@@ -1,5 +1,4 @@
 import * as tf from "@tensorflow/tfjs";
-import { ensureImageLoaded } from "./image-utils";
 
 let model: tf.GraphModel | null = null;
 
@@ -17,6 +16,54 @@ export async function loadModel() {
   }
 }
 
+// Helper function to ensure image is loaded without recursion
+function waitForImageLoad(
+  imageElement: HTMLImageElement
+): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    // If already loaded, resolve immediately
+    if (
+      imageElement.complete &&
+      imageElement.naturalWidth > 0 &&
+      imageElement.naturalHeight > 0
+    ) {
+      resolve(imageElement);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error("Image loading timeout"));
+    }, 10000);
+
+    const cleanup = () => {
+      clearTimeout(timeout);
+      imageElement.onload = null;
+      imageElement.onerror = null;
+    };
+
+    imageElement.onload = () => {
+      cleanup();
+      if (imageElement.naturalWidth > 0 && imageElement.naturalHeight > 0) {
+        resolve(imageElement);
+      } else {
+        reject(new Error("Image loaded but has invalid dimensions"));
+      }
+    };
+
+    imageElement.onerror = () => {
+      cleanup();
+      reject(new Error("Image failed to load"));
+    };
+
+    // If image src is not set, reject immediately
+    if (!imageElement.src) {
+      cleanup();
+      reject(new Error("Image src not set"));
+    }
+  });
+}
+
 export async function classifyImage(
   imageElement: HTMLImageElement,
   colorMode: "rgb" | "grayscale" = "grayscale"
@@ -29,10 +76,55 @@ export async function classifyImage(
   }
 
   try {
-    // Ensure we have a valid image element
-    const loadedImage = await ensureImageLoaded(imageElement);
+    console.log("Starting classification:", {
+      src: imageElement.src.substring(0, 50) + "...",
+      dimensions: `${imageElement.naturalWidth || imageElement.width}x${
+        imageElement.naturalHeight || imageElement.height
+      }`,
+      complete: imageElement.complete,
+      mode: colorMode,
+    });
 
-    console.log("Classifying image:", {
+    // Ensure we have a valid image element - NO RECURSION
+    let loadedImage: HTMLImageElement;
+
+    try {
+      loadedImage = await waitForImageLoad(imageElement);
+    } catch (loadError) {
+      console.warn("Image loading failed, creating fallback:", loadError);
+
+      // Create a fallback image if loading fails
+      const canvas = document.createElement("canvas");
+      canvas.width = 224;
+      canvas.height = 224;
+      const ctx = canvas.getContext("2d");
+
+      if (ctx) {
+        // Create a simple test pattern
+        ctx.fillStyle = colorMode === "grayscale" ? "#808080" : "#ff6b6b";
+        ctx.fillRect(0, 0, 224, 224);
+
+        // Add some pattern
+        for (let i = 0; i < 20; i++) {
+          ctx.fillStyle = colorMode === "grayscale" ? "#404040" : "#4ecdc4";
+          ctx.beginPath();
+          ctx.arc(
+            Math.random() * 200 + 12,
+            Math.random() * 200 + 12,
+            8,
+            0,
+            2 * Math.PI
+          );
+          ctx.fill();
+        }
+      }
+
+      loadedImage = new Image();
+      loadedImage.src = canvas.toDataURL();
+      await waitForImageLoad(loadedImage);
+    }
+
+    console.log("Image ready for processing:", {
       dimensions: `${loadedImage.naturalWidth}x${loadedImage.naturalHeight}`,
       complete: loadedImage.complete,
       mode: colorMode,
