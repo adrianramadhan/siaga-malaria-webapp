@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ImageIcon, CheckCircle } from "lucide-react";
+import { Download } from "lucide-react";
 import Image from "next/image";
 
 interface SampleImage {
@@ -13,19 +13,15 @@ interface SampleImage {
   description: string;
   type: "parasitized" | "uninfected";
   mode: "rgb" | "grayscale";
-  url: string;
   expectedResult: string;
+  filename: string;
+  imagePath: string;
 }
 
-interface SampleImagesProps {
-  onSelectSample: (imageUrl: string, colorMode: "rgb" | "grayscale") => void;
-}
+export function SampleImages() {
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-export function SampleImages({ onSelectSample }: SampleImagesProps) {
-  const [selectedSample, setSelectedSample] = useState<string | null>(null);
-  const [loadingSample, setLoadingSample] = useState<string | null>(null);
-
-  // Sample images untuk testing
+  // Sample images menggunakan gambar yang sudah ada di public/image
   const sampleImages: SampleImage[] = [
     {
       id: "parasitized-rgb",
@@ -33,8 +29,9 @@ export function SampleImages({ onSelectSample }: SampleImagesProps) {
       description: "Blood smear with malaria parasites - RGB color mode",
       type: "parasitized",
       mode: "rgb",
-      url: "/image/parasitized-rgb.jpg",
       expectedResult: "Positive for malaria parasites",
+      filename: "malaria_parasitized_rgb_sample.jpg",
+      imagePath: "/image/parasitized-rgb.jpg",
     },
     {
       id: "parasitized-grayscale",
@@ -42,8 +39,9 @@ export function SampleImages({ onSelectSample }: SampleImagesProps) {
       description: "Blood smear with malaria parasites - Grayscale enhanced",
       type: "parasitized",
       mode: "grayscale",
-      url: "/image/parasitized.jpg",
       expectedResult: "Positive for malaria parasites",
+      filename: "malaria_parasitized_grayscale_sample.jpg",
+      imagePath: "/image/parasitized.jpg",
     },
     {
       id: "uninfected-rgb",
@@ -51,8 +49,9 @@ export function SampleImages({ onSelectSample }: SampleImagesProps) {
       description: "Healthy blood smear without parasites - RGB color mode",
       type: "uninfected",
       mode: "rgb",
-      url: "/image/uninfected-rgb.jpg",
       expectedResult: "Negative for malaria parasites",
+      filename: "malaria_uninfected_rgb_sample.jpg",
+      imagePath: "/image/uninfected-rgb.jpg",
     },
     {
       id: "uninfected-grayscale",
@@ -60,27 +59,45 @@ export function SampleImages({ onSelectSample }: SampleImagesProps) {
       description: "Healthy blood smear without parasites - Grayscale enhanced",
       type: "uninfected",
       mode: "grayscale",
-      url: "/image/uninfected.jpg",
       expectedResult: "Negative for malaria parasites",
+      filename: "malaria_uninfected_grayscale_sample.jpg",
+      imagePath: "/image/uninfected.jpg",
     },
   ];
 
-  const handleSelectSample = async (sample: SampleImage) => {
+  const handleDownloadSample = async (sample: SampleImage) => {
     try {
-      setLoadingSample(sample.id);
-      setSelectedSample(sample.id);
+      setDownloadingId(sample.id);
 
-      console.log("Selecting sample:", sample.id, sample.mode);
+      // Fetch the image from public folder
+      const response = await fetch(sample.imagePath);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.statusText}`);
+      }
 
-      // Call the parent handler
-      await onSelectSample(sample.url, sample.mode);
+      // Convert to blob
+      const blob = await response.blob();
 
-      console.log("Sample selection completed");
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = sample.filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up
+      URL.revokeObjectURL(url);
+
+      console.log(`Downloaded sample: ${sample.filename}`);
     } catch (error) {
-      console.error("Error selecting sample:", error);
-      setSelectedSample(null);
+      console.error("Error downloading sample:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      alert(`Failed to download sample: ${errorMessage}`);
     } finally {
-      setLoadingSample(null);
+      setDownloadingId(null);
     }
   };
 
@@ -88,12 +105,13 @@ export function SampleImages({ onSelectSample }: SampleImagesProps) {
     <Card className="mb-6">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <ImageIcon className="h-5 w-5" />
-          Sample Images / Gambar Contoh
+          <Download className="h-5 w-5" />
+          Download Sample Images / Unduh Gambar Contoh
         </CardTitle>
         <p className="text-sm text-gray-600">
-          Try our sample blood smear images to test the malaria detection system
-          / Coba gambar contoh untuk menguji sistem deteksi malaria
+          Download realistic blood smear sample images to test the malaria
+          detection system / Unduh gambar contoh untuk menguji sistem deteksi
+          malaria
         </p>
       </CardHeader>
       <CardContent>
@@ -101,27 +119,22 @@ export function SampleImages({ onSelectSample }: SampleImagesProps) {
           {sampleImages.map((sample) => (
             <div
               key={sample.id}
-              className={`border rounded-lg overflow-hidden transition-all cursor-pointer hover:shadow-md ${
-                selectedSample === sample.id
-                  ? "ring-2 ring-green-500 bg-green-50"
-                  : "hover:border-gray-300"
-              }`}
-              onClick={() => handleSelectSample(sample)}
+              className="border rounded-lg overflow-hidden hover:shadow-md transition-all"
             >
               {/* Image Preview */}
               <div className="relative aspect-square bg-gray-100">
                 <Image
-                  src={sample.url || "/placeholder.svg"}
+                  src={sample.imagePath || "/placeholder.svg"}
                   alt={sample.name}
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                  onLoad={() =>
-                    console.log(`Sample image loaded: ${sample.id}`)
-                  }
-                  onError={(e) =>
-                    console.warn(`Sample image error: ${sample.id}`, e)
-                  }
+                  onError={(e) => {
+                    console.error(`Failed to load image: ${sample.imagePath}`);
+                    // Fallback to placeholder if image fails to load
+                    e.currentTarget.src =
+                      "/placeholder.svg?height=300&width=300&text=Sample+Image";
+                  }}
                 />
                 <div className="absolute top-2 left-2 flex gap-1">
                   <Badge
@@ -139,14 +152,7 @@ export function SampleImages({ onSelectSample }: SampleImagesProps) {
                     {sample.mode.toUpperCase()}
                   </Badge>
                 </div>
-                {selectedSample === sample.id && (
-                  <div className="absolute inset-0 bg-green-500 bg-opacity-20 flex items-center justify-center">
-                    <div className="bg-green-500 text-white p-2 rounded-full">
-                      <CheckCircle className="h-4 w-4" />
-                    </div>
-                  </div>
-                )}
-                {loadingSample === sample.id && (
+                {downloadingId === sample.id && (
                   <div className="absolute inset-0 bg-blue-500 bg-opacity-20 flex items-center justify-center">
                     <div className="bg-blue-500 text-white p-2 rounded-full">
                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
@@ -162,37 +168,33 @@ export function SampleImages({ onSelectSample }: SampleImagesProps) {
                   {sample.description}
                 </p>
 
-                <div className="space-y-1">
+                <div className="space-y-1 mb-3">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-gray-500">Expected Result:</span>
                   </div>
                   <p className="text-xs font-medium text-gray-700">
                     {sample.expectedResult}
                   </p>
+                  <p className="text-xs text-blue-600">📁 {sample.filename}</p>
                 </div>
 
                 <Button
                   size="sm"
-                  variant={selectedSample === sample.id ? "default" : "outline"}
-                  className="w-full mt-3 text-xs"
-                  disabled={loadingSample === sample.id}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSelectSample(sample);
-                  }}
+                  variant="outline"
+                  className="w-full text-xs bg-transparent"
+                  disabled={downloadingId === sample.id}
+                  onClick={() => handleDownloadSample(sample)}
                 >
-                  {loadingSample === sample.id ? (
+                  {downloadingId === sample.id ? (
                     <>
-                      <div className="animate-spin rounded-full h-3 w-3 border border-white border-t-transparent mr-2"></div>
-                      Loading...
-                    </>
-                  ) : selectedSample === sample.id ? (
-                    <>
-                      <CheckCircle className="h-3 w-3 mr-2" />
-                      Selected
+                      <div className="animate-spin rounded-full h-3 w-3 border border-gray-600 border-t-transparent mr-2"></div>
+                      Downloading...
                     </>
                   ) : (
-                    "Use This Sample"
+                    <>
+                      <Download className="h-3 w-3 mr-2" />
+                      Download Sample
+                    </>
                   )}
                 </Button>
               </div>
@@ -203,19 +205,17 @@ export function SampleImages({ onSelectSample }: SampleImagesProps) {
         {/* Instructions */}
         <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <h4 className="text-sm font-medium text-blue-800 mb-2">
-            How to Use Sample Images / Cara Menggunakan
+            How to Use Sample Images / Cara Menggunakan Gambar Contoh
           </h4>
           <div className="text-sm text-blue-700 space-y-1">
-            <p>1. Click on any sample image above to select it</p>
             <p>
-              2. The image will be automatically loaded and processed for
-              analysis
+              1. Click &quot;Download Sample&quot; on any image above to save it to your
+              computer
             </p>
-            <p>
-              3. The color mode (RGB or Grayscale) is pre-configured for each
-              sample
-            </p>
-            <p>4. Click &quot;Analyze Image&quot; to see the AI detection results</p>
+            <p>2. Go to the &quot;Upload Image&quot; tab</p>
+            <p>3. Upload the downloaded sample image from your computer</p>
+            <p>4. Select the appropriate analysis mode (RGB or Grayscale)</p>
+            <p>5. Click &quot;Analyze Image&quot; to see the AI detection results</p>
             <p className="text-xs mt-2 text-blue-600">
               💡 Tip: Each sample is designed to demonstrate different aspects
               of malaria detection!
@@ -234,6 +234,11 @@ export function SampleImages({ onSelectSample }: SampleImagesProps) {
               detected as &quot;Positive&quot; by the AI model. The parasites appear as
               dark spots within red blood cells.
             </p>
+            <div className="mt-2 text-xs text-red-600">
+              <p>• Contains malaria parasites</p>
+              <p>• Dark spots in red blood cells</p>
+              <p>• Expected: Positive result</p>
+            </div>
           </div>
           <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
             <h4 className="text-sm font-medium text-green-800 mb-1">
@@ -244,7 +249,75 @@ export function SampleImages({ onSelectSample }: SampleImagesProps) {
               detected as &quot;Negative&quot; by the AI model. Only normal red blood
               cells are visible.
             </p>
+            <div className="mt-2 text-xs text-green-600">
+              <p>• No parasites present</p>
+              <p>• Normal red blood cells only</p>
+              <p>• Expected: Negative result</p>
+            </div>
           </div>
+        </div>
+
+        {/* File Information */}
+        <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+          <h4 className="text-sm font-medium text-gray-800 mb-2">
+            📋 Sample Files Information
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-600">
+            <div>
+              <p>
+                <strong>Source:</strong> Real blood smear images
+              </p>
+              <p>
+                <strong>Format:</strong> JPEG (High Quality)
+              </p>
+              <p>
+                <strong>Usage:</strong> Testing and demonstration
+              </p>
+            </div>
+            <div>
+              <p>
+                <strong>Types:</strong> Parasitized & Uninfected
+              </p>
+              <p>
+                <strong>Modes:</strong> RGB Color & Grayscale
+              </p>
+              <p>
+                <strong>Quality:</strong> Medical grade samples
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Download All Button */}
+        <div className="mt-4 text-center">
+          <Button
+            variant="outline"
+            onClick={async () => {
+              // Download all samples sequentially
+              for (const sample of sampleImages) {
+                await handleDownloadSample(sample);
+                // Small delay between downloads
+                await new Promise((resolve) => setTimeout(resolve, 500));
+              }
+            }}
+            disabled={downloadingId !== null}
+            className="px-6"
+          >
+            {downloadingId ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border border-gray-600 border-t-transparent mr-2"></div>
+                Downloading...
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4 mr-2" />
+                Download All Samples
+              </>
+            )}
+          </Button>
+          <p className="text-xs text-gray-500 mt-2">
+            Download all 4 sample images at once
+          </p>
         </div>
       </CardContent>
     </Card>
